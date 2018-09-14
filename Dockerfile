@@ -58,6 +58,7 @@ RUN pip --no-cache-dir install \
         fbprophet \
         jupyterlab \
         tqdm \
+        tensorboard \
         && \
     python -m ipykernel.kernelspec
 
@@ -88,7 +89,18 @@ RUN echo "c.InteractiveShellApp.exec_lines = ['%matplotlib inline']" >>${CONFIG_
 EXPOSE 8888 6006
 
 VOLUME /workdir
+VOLUME /logs
+
+#please write command when docker up
+ENV UP_SCRIPT /root/up_script.sh
+
+RUN touch ${UP_SCRIPT} && \
+    chmod 777 ${UP_SCRIPT} && \
+    echo "jupyter lab --allow-root &" >>${UP_SCRIPT} && \
+    echo "tensorboard --logdir=logs --port 6006 &">>${UP_SCRIPT} && \
+    echo "tail -f /dev/null">>${UP_SCRIPT}
 
 # Run Jupyter Notebook
 WORKDIR "/workdir"
-CMD ["jupyter","lab", "--allow-root"]
+# CMD ["jupyter","lab", "--allow-root"]
+CMD ${UP_SCRIPT}
