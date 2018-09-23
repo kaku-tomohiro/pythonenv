@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     libav-tools \
     python3-setuptools \
     vim \
+    git \
+    wget \
     htop
 
 RUN apt-get clean && \
@@ -59,6 +61,7 @@ RUN pip --no-cache-dir install \
         jupyterlab \
         tqdm \
         tensorboard \
+	hyperopt \
         && \
     python -m ipykernel.kernelspec
 
