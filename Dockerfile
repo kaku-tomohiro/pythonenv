@@ -57,6 +57,8 @@ RUN pip3.6 install --upgrade pip
 WORKDIR /opt/modules/build
 COPY requirements.txt /opt/modules/build/requirements.txt
 RUN pip3.6 install -r requirements.txt
+# Install fbprophet after pystan install
+RUN pip3.6 install fbprophet==0.3.post2
 RUN python3.6 -m ipykernel.kernelspec
 
 # Set up Jupyter Notebook config
