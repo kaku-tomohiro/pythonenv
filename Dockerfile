@@ -30,40 +30,34 @@ ENV PATH $HOME/.nodebrew/current/bin:$PATH
 RUN . $HOME/.bashrc && nodebrew install-binary $NODE_VERSION && \
     . $HOME/.bashrc && nodebrew use $NODE_VERSION
 
+#install fasttext
+WORKDIR /opt/modules
+RUN git clone https://github.com/facebookresearch/fastText.git fasttext
+WORKDIR /opt/modules/fasttext
+RUN pip3.6 install .
+
+#mecab
+WORKDIR /opt/modules
+
+RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git mecab-ipadic-neologd
+WORKDIR /opt/modules/mecab-ipadic-neologd
+RUN ./bin/install-mecab-ipadic-neologd -y -n -p "$(dirname $(mecab -D | awk 'NR==1 {print $2}'))"
+
+
 # Install python library
 
-RUN pip install --upgrade pip
+RUN pip3.6 install --upgrade pip
 
 # Install TensorFlow CPU version
-ENV TENSORFLOW_VERSION 1.2.1
-RUN pip --no-cache-dir install \
-    http://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl
+# ENV TENSORFLOW_VERSION 1.2.1
+# RUN pip3.6 --no-cache-dir install \
+#     http://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-${TENSORFLOW_VERSION}-cp36-cp36m-linux_x86_64.whl
 
 # Install Python library for Data Science
-RUN pip --no-cache-dir install \
-        keras \
-        sklearn \
-        jupyter \
-        ipykernel \
-		scipy \
-        simpy \
-        matplotlib \
-        numpy \
-        pandas \
-        plotly \
-        sympy \
-        mecab-python3 \
-        librosa \
-        Pillow \
-        h5py \
-        google-api-python-client \
-        fbprophet \
-        jupyterlab \
-        tqdm \
-        tensorboard \
-	hyperopt \
-        && \
-    python -m ipykernel.kernelspec
+WORKDIR /opt/modules/build
+COPY requirements.txt /opt/modules/build/requirements.txt
+RUN pip3.6 install -r requirements.txt
+RUN python3.6 -m ipykernel.kernelspec
 
 # Set up Jupyter Notebook config
 ENV CONFIG /root/.jupyter/jupyter_notebook_config.py
@@ -71,13 +65,15 @@ ENV CONFIG_IPYTHON /root/.ipython/profile_default/ipython_config.py
 
 RUN jupyter notebook --generate-config --allow-root && \
     ipython profile create
+RUN jupyter contrib nbextension install --user
+
 # for tqdm
 RUN jupyter nbextension enable --py --sys-prefix widgetsnbextension && \
     . $HOME/.bashrc && jupyter labextension install ipyvolume && \
     . $HOME/.bashrc && jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.37.3
 
 
-RUN echo "c.NotebookApp.ip = '*'" >>${CONFIG} && \
+RUN echo "c.NotebookApp.ip = '0.0.0.0'" >>${CONFIG} && \
     echo "c.NotebookApp.open_browser = False" >>${CONFIG} && \
     echo "c.NotebookApp.iopub_data_rate_limit=10000000000" >>${CONFIG} && \
     echo "c.MultiKernelManager.default_kernel_name = 'python3'" >>${CONFIG} && \
